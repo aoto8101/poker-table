@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>Poker Turn UI</title>
+
+<style>
+  body {
+    font-family: system-ui, sans-serif;
+    background: #0f172a;
+    color: white;
+    padding: 20px;
+  }
+
+  .player {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 12px;
+    margin-bottom: 6px;
+    border-radius: 6px;
+    background: #1e293b;
+  }
+
+  .player.active {
+    outline: 2px solid #38bdf8;
+    background: #0ea5e9;
+    color: black;
+    font-weight: bold;
+  }
+
+  .player.folded {
+    opacity: 0.3;
+    text-decoration: line-through;
+  }
+
+  button {
+    margin: 8px 8px 0 0;
+    padding: 10px 16px;
+    font-size: 16px;
+  }
+</style>
+</head>
+
+<body>
+
+<div id="players"></div>
+
+<button onclick="bet()">BET</button>
+<button onclick="call()">CALL</button>
+<button onclick="fold()">FOLD</button>
+
+<script>
+const GAS_URL = "https://script.google.com/macros/s/AKfycbyCPXx_d1_2eWOLkAxiL7XBh3w_KnL46xJDNHnoyZSxRgo8M12xEbIBHjSy9v72Gleh/exec";
+
+let players = [];
+let state = {};
+
+async function load() {
+  const res = await fetch(GAS_URL);
+  const data = await res.json();
+  players = data.players;
+  state = data.state;
+  render();
+}
+
+function render() {
+  const box = document.getElementById("players");
+  box.innerHTML = "";
+
+  players.forEach((p, i) => {
+    const row = document.createElement("div");
+    row.className = "player";
+
+    if (i === Number(state.turnIndex)) row.classList.add("active");
+    if (p.folded) row.classList.add("folded");
+
+    row.innerHTML = `
+      <div>${p.name}</div>
+      <div>${p.chips.toLocaleString()}</div>
+    `;
+    box.appendChild(row);
+  });
+}
+
+function sendAction(action) {
+  fetch(GAS_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      type: "action",
+      action
+    })
+  }).then(load);
+}
+
+function bet() { sendAction("BET"); }
+function call() { sendAction("CALL"); }
+function fold() { sendAction("FOLD"); }
+
+load();
+</script>
+
+</body>
+</html>
